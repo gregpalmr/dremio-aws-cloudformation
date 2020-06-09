@@ -3,11 +3,35 @@
 
 This readme file describes how to launch a Dremio Data Lake Engine into an AWS Cloudformation stack using the AWS CLI commands on a Macbook Pro laptop computer.
 
-## Step 1. Prerequisites
+## Step 1. Install Required Command Line tools
 
-### 1.a Create an AWS Key pair
+### 1.a Install the AWS CLI program
 
-  SEE: https://docs.aws.amazon.com/cli/latest/reference/ec2/create-key-pair.html
+See: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html
+
+     $ brew install awscli
+
+### 1.b Configure AWS CLI
+
+     $ aws configure
+          < enter aws access key id, etc>
+
+     $ cat ~/.aws/config
+     $ cat ~/.aws/credentials
+
+### 1.c Install git
+
+See: https://git-scm.com/download/mac
+
+     $ brew install git
+
+## Step 2. Create AWS Required Resources
+
+Create the AWS key pair, VPC and Subnet objects needed by the Dremio Cloudformation template.
+
+### 2.a Create an AWS Key pair
+
+  See: https://docs.aws.amazon.com/cli/latest/reference/ec2/create-key-pair.html
 
   An AWS Key pair is used to setup a secure SSH session to your AWS EC2 instances. Create a new key pair using the following commands:
   
@@ -27,17 +51,17 @@ This readme file describes how to launch a Dremio Data Lake Engine into an AWS C
     1FX23VLX3zP927/dclZRbPgF6aXHJcWUNsgrwhtqw5A1XtL/5Dy9piuF4DDsME2nZWuoA8g=
     -----END RSA PRIVATE KEY-----
 
-  Save this file in a safe place because it is not stored anyplace else. It will be used for your PuttyTelnet or other SSH client if you wish to SSH into any of your EKS EC2 instances. You can display information about the new key pair using the command:
+  Save this file in a safe place because it is not stored anyplace else. It will be used for your PuttyTelnet or other SSH client if you wish to SSH into any of your Dremio EC2 instances. You can display information about the new key pair using the command:
   
      $ aws ec2 describe-key-pairs --key-name Dremio_Keypair
 	 
      KEYPAIRS        28:14:35:ba:7c:b7:0e:3f:4c:62:c9:45:6a:6e:54:eb:0a:19:d2:5c     Dremio_Keypair       key-073ec4d75b1b670d1
 
-### 1.b Create an AWS VPC and Subnets
+### 2.b Create an AWS VPC and Subnets
 
-SEE: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-example.html
+See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-example.html
 
-  When you deploy an AWS EKS cluster, you must identify an existing AWS Virtual Private Cloud environment as well as a PRIVATE subnet (and optionally, a PUBLIC subnet).
+  When you deploy an AWS Dremio cluster, you must identify an existing AWS Virtual Private Cloud environment as well as a PRIVATE subnet (and optionally, a PUBLIC subnet).
   
   If you have permissions from your AWS administrator you can execute these commands yourself. If not, you should contact your AWS administrator and request that they create them for you (or provide you with existing VPC and subnet information).
   
@@ -52,14 +76,8 @@ SEE: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
      $ aws ec2 create-subnet --vpc-id vpc-2f09d348 --cidr-block 10.0.1.0/24
 
      ID: subnet-b46032ec
-
-  Create a second subnet in your VPC with a 10.0.0.0/24 CIDR block.
-
-     $ aws ec2 create-subnet --vpc-id vpc-2f09d348 --cidr-block 10.0.0.0/24
-
-     ID: subnet-a46032fc
 	 
-  Now make your subnet public, so you can access the EKS cluster and later, Dremio via your desktop or laptop computer. If your organization does not allow public subnets, then you can ask your AWS administrator to make sure you can access your VPC subnets via a private network.
+  Now make your subnet public, so you can access the Dremio cluster and later, Dremio via your desktop or laptop computer. If your organization does not allow public subnets, then you can ask your AWS administrator to make sure you can access your VPC subnets via a private network.
 
      $ aws ec2 create-internet-gateway
 
@@ -85,16 +103,12 @@ SEE: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
   The route table is currently not associated with any subnet. You need to associate it with a subnet in your VPC so that traffic from that subnet is routed to the Internet gateway. First, use the describe-subnets command to get your subnet IDs. You can use the --filter option to return the subnets for your new VPC only, and the --query option to return only the subnet IDs and their CIDR blocks.
   
-     PS C:\> aws ec2 describe-subnets --filters "Name=vpc-id,Values=vpc-2f09a348" --query 'Subnets[*].{ID:SubnetId,CIDR:CidrBlock}'
+     $ aws ec2 describe-subnets --filters "Name=vpc-id,Values=vpc-2f09a348" --query 'Subnets[*].{ID:SubnetId,CIDR:CidrBlock}'
 	 
      [
          {
-             "CIDR": "10.0.1.0/24", 
-             "ID": "subnet-b46032ec"
-         }, 
-         {
              "CIDR": "10.0.0.0/24", 
-             "ID": "subnet-a46032fc"
+             "ID": "subnet-b46032ec"
          }
      ]
 
@@ -106,9 +120,7 @@ SEE: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
   
      $ aws ec2 modify-subnet-attribute --subnet-id subnet-b46032ec --map-public-ip-on-launch
 
-
-
-## Step 2. Download the Dremio Cloudformation template
+## Step 3. Download the Dremio Cloudformation template
 
 ### Use git or curl to download the Dremio Cloudformation template file
 
@@ -120,50 +132,50 @@ OR
 
      $ curl -O https://raw.githubusercontent.com/dremio/dremio-cloud-tools/master/aws/cloudformation/dremio_cf.yaml
 
-## Step 3. Modify the Cloudformation template
+## Step 4. Modify the Cloudformation template
 
-### Modify the Cloudformation template to include your AWS region specific resources
+### (Optional) Modify the Cloudformation template to include your AWS region specific resources
 
      $ vi dremio_cf.yaml
 
-## Step 4. Launch a Dremio cluster using an AWS Cloudformation template
+## Step 5. Launch a Dremio cluster using an AWS Cloudformation template
 
-### 4.a Validate the Cloudformation template 
+### 5.a Validate the Cloudformation template 
 
-     aws cloudformation validate-template --template-body file://dremio_cf.yaml
+     $ aws cloudformation validate-template --template-body file://dremio_cf.yaml
 
-### 4.b Launch the cloudformation stack
+### 5.b Launch the cloudformation stack
 
-     aws --region us-west-2 cloudformation create-stack --stack-name Gregs-Dremio-Cluster \
+     $ aws --region us-west-2 cloudformation create-stack --stack-name My-Dremio-Cluster \
          --template-body file://dremio_cf.yaml \
-         --tags "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Pre-Sales" \
+         --tags "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales" \
          --parameters \
-           "ParameterKey=useVPC,            ParameterValue=vpc-72cc4c0a" \
-           "ParameterKey=useSubnet,         ParameterValue=subnet-3fa74b62" \
-           "ParameterKey=dremioDownloadURL, ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm" \
-           "ParameterKey=keyName,           ParameterValue=greg_palmer_eks_keypair" \
+           "ParameterKey=useVPC,            ParameterValue=vpc-2f09d348" \
+           "ParameterKey=useSubnet,         ParameterValue=subnet-b46032ec" \
+           "ParameterKey=dremioDownloadURL, ParameterValue=https://download.dremio.com/<path to dremio rpm file>" \
+           "ParameterKey=keyName,           ParameterValue=Dremio_Keypair" \
            "ParameterKey=clusterSize,       ParameterValue=Small--5-executors"
 
      
-     arn:aws:cloudformation:us-west-2:384816939103:stack/Gregs-Dremio-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
+     arn:aws:cloudformation:us-west-2:384816939103:stack/My-Dremio-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
 
   Get various progress reports on the stack creation process
 
-     aws --region us-west-2 cloudformation describe-stacks --stack-name Gregs-Dremio-Cluster
+     $ aws --region us-west-2 cloudformation describe-stacks --stack-name My-Dremio-Cluster
 
-     aws cloudformation describe-stack-events --stack-name Gregs-Dremio-Cluster
+     $ aws cloudformation describe-stack-events --stack-name My-Dremio-Cluster
 
-     aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
+     $ aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
 
-### 4.c Get Dremio Web UI address
+### 5.c Get Dremio Web UI address
 
   Get the stack output that describes the URL for the Dremio Web UI
 
-     aws --region us-west-2 cloudformation describe-stacks --stack-name Gregs-Dremio-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
+     $ aws --region us-west-2 cloudformation describe-stacks --stack-name My-Dremio-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
 
-### Step 5. Delete the Dremio Cloudformation Stack
+### Step 6. Delete the Dremio Cloudformation Stack
 
-     aws cloudformation --stack-name Gregs-Dremio-Cluster 
+     $ aws cloudformation --stack-name My-Dremio-Cluster 
 
 ## End of document
 
