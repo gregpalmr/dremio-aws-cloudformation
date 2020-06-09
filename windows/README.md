@@ -213,7 +213,7 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
 ### Step 6. Delete the Dremio Cloudformation Stack
 
-     PS C:\> aws cloudformation --stack-name My-Dremio-Cluster 
+     PS C:\> aws cloudformation delete-stack --stack-name My-Dremio-Cluster 
 
 ---
 
