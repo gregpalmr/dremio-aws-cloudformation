@@ -6,11 +6,12 @@ This git repo describes how to launch the Dremio Data Lake Engine into an AWS Cl
 
 ## Mac Instructions
 
-[Mac] https://github.com/gregpalmr/dremio-aws-cloudformation/mac/README.md
+[Mac] /dremio-aws-cloudformation/mac/README.md
+[Mac] /dremio-aws-cloudformation/mac/
 
 ## Windows Instructions
 
-[Windows] https://github.com/gregpalmr/dremio-aws-cloudformation/windows/README.md
+[Windows] /gregpalmr/dremio-aws-cloudformation/windows/README.md
 
 Please direct questions or comments to greg@dremio.com.
 
