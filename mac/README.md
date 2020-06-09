@@ -161,10 +161,13 @@ OR
 
      aws --region us-west-2 cloudformation describe-stacks --stack-name Gregs-Dremio-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
 
+### Step 5. Delete the Dremio Cloudformation Stack
+
+     aws cloudformation --stack-name Gregs-Dremio-Cluster 
+
 ## End of document
 
 ### Please direct questions or comments to greg@dremio.com
-
 
 
 
