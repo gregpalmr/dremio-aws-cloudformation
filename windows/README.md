@@ -178,7 +178,7 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
      PS C:\> aws cloudformation validate-template --template-body file://dremio_cf.yaml
 
-### 5.b Launch the cloudformation stack
+### 5.b Launch the Cloudformation stack
 
 The Dremio Cloudformation template requires a parameter to tell it where to download the Dremio installer program from. If you would like to use the Enterprise version of Dremio, contact your local Dremio sales representative to get a copy of the file and upload it to your S3 bucket. If you would like to install the Community Edition of Dremio, use the parameter:
 
