@@ -181,9 +181,9 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
      $ aws cloudformation --stack-name My-Dremio-Cluster 
 
-## End of document
+---
 
-### Please direct questions or comments to greg@dremio.com
+Please direct questions or comments to greg@dremio.com
 
 
 

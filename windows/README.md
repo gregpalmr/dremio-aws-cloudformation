@@ -183,7 +183,7 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 The Dremio Cloudformation template requires a parameter to tell it where to download the Dremio installer program from. If you would like to use the Enterprise version of Dremio, contact your local Dremio sales representative to get a copy of the file and upload it to your S3 bucket. If you would like to install the Community Edition of Dremio, use the parameter:
 
      "ParameterKey=dremioDownloadURL, ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm"
-     
+
      PS C:\> aws --region us-west-2 cloudformation create-stack --stack-name My-Dremio-Cluster
          --template-body file://dremio_cf.yaml
          --tags "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales"
@@ -215,9 +215,9 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
      PS C:\> aws cloudformation --stack-name My-Dremio-Cluster 
 
-## End of document
+---
 
-### Please direct questions or comments to greg@dremio.com
+Please direct questions or comments to greg@dremio.com
 
 
 
