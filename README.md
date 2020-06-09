@@ -6,5 +6,5 @@ This git repo describes how to launch the Dremio Data Lake Engine into an AWS Cl
 
 
 ---
-Please direct questions or comments to greg@dremio.com.
+Please direct questions or comments to greg@dremio.com
 
