@@ -43,7 +43,7 @@ See: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html
 
 ### 1.c Install git
 
-SEE: https://git-scm.com/download/win
+See: https://git-scm.com/download/win
 
   Git is used to access source code repositories on gihub.com and other Git repo servers. You will use the git command to download source code from Dremio's github repo.
 
