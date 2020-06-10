@@ -3,7 +3,7 @@
 
 Deploy the Dremio Data Lake Engine as an AWS Cloudformation Stack
 
-This git repo describes how to launch the Dremio Data Lake Engine into an AWS Cloudformation stack using the AWS CLI commands on a Mac computer or a Windows computer.
+This git repo describes how to launch the Dremio Data Lake Engine into an AWS Cloudformation stack using the AWS CLI commands from a Mac client computer or a Windows client computer.
 
 ## 1. Launch Dremio Cluster from a Windows Client
 
