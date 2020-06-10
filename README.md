@@ -17,7 +17,7 @@ Click on the "mac" link above and follow the instructions
 
 The following sections illustrate some advanced configuration.
 
-### Enable AD/LDAP Logging
+### Enable AD/LDAP Authentication
 See: https://docs.dremio.com/deployment/amazon-eks/eks-custom.html?h=logback
 
 ```
