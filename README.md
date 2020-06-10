@@ -5,15 +5,15 @@ Deploy the Dremio Data Lake Engine as an AWS Cloudformation Stack
 
 This git repo describes how to launch the Dremio Data Lake Engine into an AWS Cloudformation stack using the AWS CLI commands on a Mac computer or a Windows computer.
 
-## Launch Dremio Cluster from a Windows Client
+## 1. Launch Dremio Cluster from a Windows Client
 
 Click on the "windows" link above and follow the instructions
 
-## Launch Dremio Cluster from a Mac Client
+## 2. Launch Dremio Cluster from a Mac Client
 
 Click on the "mac" link above and follow the instructions
 
-## Advanced Dremio Configuration
+## 3. Advanced Dremio Configuration
 
 The following sections illustrate some advanced configuration.
 
@@ -84,19 +84,20 @@ See: https://docs.dremio.com/deployment/wire-encryption-config.html?h=coordinato
 vi /etc/dremio/dremio.conf
 
 services: {
-...
+  ...
   coordinator.web.ssl.enabled: true,
   coordinator.web.ssl.auto-certificate.enabled: false,
   coordinator.web.ssl.keyStore: "/etc/dremio/keystore.jks",
   coordinator.web.ssl.keyStorePassword: "file password",
   coordinator.web.port: 443
-...
+  ...
 }
 ```
 
 ### Enable Dremio JDBC/ODBC Encrypted SSL Connections
 See: https://docs.dremio.com/deployment/wire-encryption-config.html?h=coordinator.web.ssl.keyStore#odbcjdbc-client-encryption--enterprise-edition-only
 
+```
 vi /etc/dremio/dremio.conf
 
 services: {
@@ -109,11 +110,13 @@ services: {
   services.coordinator.client-endpoint.ssl.keyPassword: "key password"
   ...
 }
+```
 
 
 ### Enable Dremio Intra-cluster Communication Encrypted SSL Connections
 See: https://docs.dremio.com/deployment/wire-encryption-config.html?h=coordinator.web.ssl.keyStore#intracluster-encryption-enterprise-edition-only
 
+```
 vi /etc/dremio/dremio.conf
 
 services: {
@@ -127,6 +130,7 @@ services: {
   services.fabric.ssl.keyPassword: "key password"
   ...
 }
+```
 
 ---
 Please direct questions or comments to greg@dremio.com
