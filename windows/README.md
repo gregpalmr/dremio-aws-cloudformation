@@ -184,22 +184,21 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
      "ParameterKey=dremioDownloadURL, ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm"
 
-     PS C:\> aws --region us-west-2 cloudformation create-stack --stack-name My-Dremio-Cluster
+     PS C:\> aws cloudformation create-stack --stack-name My-Dremio-Cluster
          --template-body file://dremio_cf.yaml
          --tags "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales"
          --parameters
-           "ParameterKey=useVPC,            ParameterValue=vpc-2f09d348" 
-           "ParameterKey=useSubnet,         ParameterValue=subnet-b46032ec" 
-           "ParameterKey=dremioDownloadURL, ParameterValue=https://download.dremio.com/<path to dremio rpm file>" 
-           "ParameterKey=keyName,           ParameterValue=Dremio_Keypair" 
-           "ParameterKey=clusterSize,       ParameterValue=Small--5-executors"
-
+           ParameterKey=useVPC,ParameterValue=vpc-2f09d348 
+           ParameterKey=useSubnet,ParameterValue=subnet-b46032ec
+           ParameterKey=dremioDownloadURL,ParameterValue=https://download.dremio.com/<path to dremio rpm file>
+           ParameterKey=keyName,ParameterValue=Dremio_Keypair
+           ParameterKey=clusterSize,ParameterValue=Small--5-executors
      
      arn:aws:cloudformation:us-west-2:384816939103:stack/My-Dremio-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
 
   Get various progress reports on the stack creation process
 
-     PS C:\> aws --region us-west-2 cloudformation describe-stacks --stack-name My-Dremio-Cluster
+     PS C:\> aws cloudformation describe-stacks --stack-name My-Dremio-Cluster
 
      PS C:\> aws cloudformation describe-stack-events --stack-name My-Dremio-Cluster
 
@@ -209,7 +208,7 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
   Get the stack output that describes the URL for the Dremio Web UI
 
-     PS C:\> aws --region us-west-2 cloudformation describe-stacks --stack-name My-Dremio-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
+     PS C:\> aws cloudformation describe-stacks --stack-name My-Dremio-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
 
 ### Step 6. Delete the Dremio Cloudformation Stack
 
