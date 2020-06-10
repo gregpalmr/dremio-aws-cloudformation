@@ -20,6 +20,7 @@ The following sections illustrate some advanced configuration.
 ### Enable AD/LDAP Logging
 See: https://docs.dremio.com/deployment/amazon-eks/eks-custom.html?h=logback
 
+```
 vi /etc/dremio/logback.xml
 
 <logger name=“com.dremio.extusr.ExternalUserGroupService”>
@@ -28,10 +29,12 @@ vi /etc/dremio/logback.xml
 <logger name=“com.dremio.extusr.ldap.LdapUserProvider”>
   <level value=“debug”/>
 </logger>
+```
 
 ### Enable AD/LDAP in dremio.conf
 See: https://docs.dremio.com/security/authentication.html
 
+```
 vi /etc/dremio/dremio.conf
 
 services: {
@@ -40,7 +43,9 @@ services: {
   coordinator.web.auth.ldap_config: "ad.json",
   ...
 }
+```
 
+```
 vi /etc/dremio/ad.json
 
 {
@@ -69,11 +74,13 @@ vi /etc/dremio/ad.json
     }
   }
 }
+```
 
 
 ### Enable Dremio Web UI Encrypted SSL Connections
 See: https://docs.dremio.com/deployment/wire-encryption-config.html?h=coordinator.web.ssl.keyStore#full-wire-encryption-enterprise-edition-only
 
+```
 vi /etc/dremio/dremio.conf
 
 services: {
@@ -85,6 +92,7 @@ services: {
   coordinator.web.port: 443
 ...
 }
+```
 
 ### Enable Dremio JDBC/ODBC Encrypted SSL Connections
 See: https://docs.dremio.com/deployment/wire-encryption-config.html?h=coordinator.web.ssl.keyStore#odbcjdbc-client-encryption--enterprise-edition-only
