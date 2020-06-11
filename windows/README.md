@@ -162,15 +162,17 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
 ### Use git or curl to download the Dremio Cloudformation template file
 
-     PS C:\> git clone https://github.com/dremio/dremio-cloud-tools
+     PS C:\> git clone https://github.com/gregpalmr/dremio-aws-cloudformation
 
-     PS C:\> copy dremio-cloud-tools\blob\master\aws\cloudformation\dremio_cf.yaml .
+     PS C:\> copy https://raw.githubusercontent.com/gregpalmr/dremio-aws-cloudformation/master/resources/dremio_cf.yaml .
 
 ## Step 4. Modify the Cloudformation template
 
 ### (Optional) Modify the Cloudformation template to include your AWS region specific resources
 
      PS C:\> notepad dremio_cf.yaml
+
+     < Change the Lines that contain BUCKET_NAME to reference your S3 bucket >
 
 ## Step 5. Launch a Dremio cluster using an AWS Cloudformation template
 

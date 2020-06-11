@@ -138,6 +138,8 @@ OR
 
      $ vi dremio_cf.yaml
 
+     < Change the Lines that contain BUCKET_NAME to reference your S3 bucket >
+
 ## Step 5. Launch a Dremio cluster using an AWS Cloudformation template
 
 ### 5.a Validate the Cloudformation template 
