@@ -25,7 +25,11 @@ Parameters:
     Description: "Subnet to deploy the cluster into. Must be in the selected VPC."
   dremioDownloadURL:
     Type: String
-    Description: "(Optional) HTTP or HTTPS URL to a Dremio RPM. Leave empty to install the latest Dremio CE release."
+    Description: "S3, HTTP or HTTPS URL to a Dremio RPM. Leave empty to install the latest Dremio CE release."
+    Default: "https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm"
+  dremioS3BucketName:
+    Type: String
+    Description: "An S3 bucket that Dremio can use to store reflections and temporary files."
     Default: ""
 Metadata:
   AWS::CloudFormation::Interface:
@@ -41,6 +45,7 @@ Metadata:
           - clusterSize
           - useVPC
           - useSubnet
+          - dremioS3BucketName
           - dremioDownloadURL
       -
         Label:
@@ -141,6 +146,52 @@ Mappings:
 Conditions:
   CreateVPC: !Equals [!Ref useSubnet, ""]
 Resources:
+  DremioIAMPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Sid: AllowDremioToGetS3BucketLocations
+            Effect: Allow
+            Action:
+              - s3:GetBucketLocation
+              - s3:ListAllMyBuckets
+              - s3:HeadBucket
+            Resource: "*"
+          -
+            Sid: AllowDremioToReadWriteToS3Buckets
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource: 
+              - "arn:aws:s3:::greg-palmer-dremio"
+              - "arn:aws:s3:::greg-palmer-dremio/*"
+  DremioIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - !Ref DremioIAMPolicy
+  DremioInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles: 
+        - !Ref DremioIAMRole
   VPC:
     Condition: CreateVPC
     Type: AWS::EC2::VPC
@@ -251,6 +302,7 @@ Resources:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
       KeyName: !Ref keyName
       InstanceType: !FindInMap [ClusterSizes, !Ref clusterSize, coordinatorInstanceType]
+      IamInstanceProfile: !Ref DremioInstanceProfile
       NetworkInterfaces:
         - DeleteOnTermination: "true"
           AssociatePublicIpAddress: "true"
@@ -267,12 +319,31 @@ Resources:
         Fn::Base64: !Sub
           - |
             #!/bin/bash -x
+
+            # The following command logs all stdout and stderr to a log file
+            exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
             statusFile=/tmp/statusfile
 
             if [ ! -d /opt/dremio ]; then
+
+              # install OpenJDK 1.8 and the AWS CLI
+              yum -y install java-1.8.0-openjdk-devel awscli
+
               url=${dremioDownloadURL}
               [ -z $url ] && url=${DOWNLOAD_URL}
-              yum -y install java-1.8.0-openjdk-devel $url
+
+              # Install Dremio RPM
+              if [[ $url == *s3:* ]] || [[ $url == *S3:* ]]; then
+                aws s3 cp $url .
+                yum -y install $(basename $url)
+              elif [[ $url == *http* ]] || [[ $url == *HTTP* ]]; then
+                yum -y install $url
+              else
+                echo " ERROR - Dremio Install RPM not specified as either an s3:// or http:// URI. Specified as: $url "
+                exit 1
+              fi
+
               if [ $? != 0 ]; then
                 echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"Unable to download Dremio\" }" > $statusFile
                 curl -T $statusFile '${AvailabilityWaitHandle}'
@@ -283,11 +354,34 @@ Resources:
             DREMIO_HOME=/opt/dremio
             DREMIO_CONFIG_FILE=/etc/dremio/dremio.conf
             DREMIO_ENV_FILE=/etc/dremio/dremio-env
+            DREMIO_CORE_SITE_FILE=/etc/dremio/core-site.xml
 
             sed -i -e "s/executor.enabled: true/executor.enabled: false/" \
                 $DREMIO_CONFIG_FILE
             sed -i -e "s/#DREMIO_MAX_MEMORY_SIZE_MB=/DREMIO_MAX_MEMORY_SIZE_MB=${MEMORY_SIZE}/" \
                 $DREMIO_ENV_FILE
+            echo 'DREMIO_JAVA_SERVER_EXTRA_OPTS="-XX:+UseG1GC -XX:G1HeapRegionSize=32M -XX:MaxGCPauseMillis=500 -XX:InitiatingHeapOccupancyPercent=25"' >>  \
+                $DREMIO_ENV_FILE
+
+            # Set dist configuration in dremio.conf
+            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_ENV_FILE
+
+            # Setup core-site.xml file to configure S3 storage for Dremio
+            cat <<EOF >> $DREMIO_CORE_SITE_FILE
+            <?xml version="1.0"?>
+            <configuration>
+            <property>
+               <name>fs.dremioS3.impl</name>
+               <description>The FileSystem implementation. Must be set to com.dremio.plugins.s3.store.S3FileSystem</description>
+               <value>com.dremio.plugins.s3.store.S3FileSystem</value>
+            </property>
+            <property>
+               <name>fs.s3a.aws.credentials.provider</name>
+               <description>The credential provider type.</description>
+               <value>com.amazonaws.auth.InstanceProfileCredentialsProvider</value>
+            </property>
+            </configuration>
+            EOF
 
             cp $DREMIO_HOME/share/dremio/dremio.service /etc/systemd/system
             systemctl daemon-reload
@@ -302,6 +396,7 @@ Resources:
             curl -T $statusFile '${AvailabilityWaitHandle}'
           - DOWNLOAD_URL: !FindInMap [ Custom, Variables, "URL"]
             MEMORY_SIZE: !FindInMap [ClusterSizes, !Ref clusterSize, coordinatorMaxMemory]
+            DREMIO_S3_BUCKETNAME: !Ref dremioS3BucketName
 
   DremioExecutorLC:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -316,6 +411,7 @@ Resources:
         - AMI
       InstanceMonitoring: true
       InstanceType: !FindInMap [ClusterSizes, !Ref clusterSize, executorInstanceType]
+      IamInstanceProfile: !Ref DremioInstanceProfile
       KeyName: !Ref keyName
       SecurityGroups: [!Ref DremioSecurityGroup]
       BlockDeviceMappings:
@@ -329,10 +425,35 @@ Resources:
           - |
             #!/bin/bash -x
 
+            # The following command logs all stdout and stderr to a log file
+            exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+            statusFile=/tmp/statusfile
+
             if [ ! -d /opt/dremio ]; then
+
+              # install OpenJDK 1.8 and the AWS CLI
+              yum -y install java-1.8.0-openjdk-devel awscli
+
               url=${dremioDownloadURL}
               [ -z $url ] && url=${DOWNLOAD_URL}
-              yum -y install java-1.8.0-openjdk-devel $url
+
+              # Install Dremio RPM
+              if [[ $url == *s3:* ]] || [[ $url == *S3:* ]]; then
+                aws s3 cp $url .
+                yum -y install $(basename $url)
+              elif [[ $url == *http* ]] || [[ $url == *HTTP:* ]]; then
+                yum -y install $url
+              else
+                echo " ERROR - Dremio Install RPM not specified as either an s3:// or http:// URI. Specified as: $url "
+                exit 1
+              fi
+
+              if [ $? != 0 ]; then
+                echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"Unable to download Dremio\" }" > $statusFile
+                curl -T $statusFile '${AvailabilityWaitHandle}'
+                exit 1
+              fi
             fi
 
             # Setup ephemeral disk for spill - this is based on executors are r5d class machines
@@ -366,6 +487,31 @@ Resources:
                 $DREMIO_CONFIG_FILE
             sed -i -e "s/#DREMIO_MAX_MEMORY_SIZE_MB=/DREMIO_MAX_MEMORY_SIZE_MB=${MEMORY_SIZE}/" \
                 $DREMIO_ENV_FILE
+            sed -i -e "s/#DREMIO_MAX_MEMORY_SIZE_MB=/DREMIO_MAX_MEMORY_SIZE_MB=${MEMORY_SIZE}/" \
+                $DREMIO_ENV_FILE
+            echo 'DREMIO_JAVA_SERVER_EXTRA_OPTS="-XX:+UseG1GC -XX:G1HeapRegionSize=32M -XX:MaxGCPauseMillis=500 -XX:InitiatingHeapOccupancyPercent=25"' >>  \
+                $DREMIO_ENV_FILE
+
+            # Set dist configuration in dremio.conf
+            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_ENV_FILE
+
+            # Setup core-site.xml file to configure S3 storage for Dremio
+            cat <<EOF >> $DREMIO_CORE_SITE_FILE
+            <?xml version="1.0"?>
+            <configuration>
+            <property>
+               <name>fs.dremioS3.impl</name>
+               <description>The FileSystem implementation. Must be set to com.dremio.plugins.s3.store.S3FileSystem</description>
+               <value>com.dremio.plugins.s3.store.S3FileSystem</value>
+            </property>
+            <property>
+               <name>fs.s3a.aws.credentials.provider</name>
+               <description>The credential provider type.</description>
+               <value>com.amazonaws.auth.InstanceProfileCredentialsProvider</value>
+            </property>
+            </configuration>
+            EOF
+
             cat <<EOF >> $DREMIO_CONFIG_FILE
             zookeeper: "${ZK}:2181"
             services.executor.cache.path.db: "$CLOUDCACHE_DIR"
@@ -381,6 +527,7 @@ Resources:
           - ZK: !GetAtt DremioMaster.PrivateIp
             DOWNLOAD_URL: !FindInMap [ Custom, Variables, "URL"]
             MEMORY_SIZE: !FindInMap [ClusterSizes, !Ref clusterSize, executorMaxMemory]
+            DREMIO_S3_BUCKETNAME: !Ref dremioS3BucketName
 
   DremioExecutorASG:
     Type: AWS::AutoScaling::AutoScalingGroup
