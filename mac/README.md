@@ -150,6 +150,8 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
      ParameterKey=dremioDownloadURL,ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm
 
+To launch the Dremio cluster in the Cloudformation stack, use this command:
+
      $ aws cloudformation create-stack --stack-name My-Dremio-Cluster \
          --disable-rollback \
          --capabilities CAPABILITY_IAM \

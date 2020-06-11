@@ -325,6 +325,11 @@ Resources:
 
             statusFile=/tmp/statusfile
 
+            DREMIO_HOME=/opt/dremio
+            DREMIO_CONFIG_FILE=/etc/dremio/dremio.conf
+            DREMIO_ENV_FILE=/etc/dremio/dremio-env
+            DREMIO_CORE_SITE_FILE=/etc/dremio/core-site.xml
+
             if [ ! -d /opt/dremio ]; then
 
               # install OpenJDK 1.8 and the AWS CLI
@@ -364,10 +369,10 @@ Resources:
                 $DREMIO_ENV_FILE
 
             # Set dist configuration in dremio.conf
-            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_ENV_FILE
+            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_CONFIG_FILE
 
             # Setup core-site.xml file to configure S3 storage for Dremio
-            cat <<EOF >> $DREMIO_CORE_SITE_FILE
+            cat <<EOF > $DREMIO_CORE_SITE_FILE
             <?xml version="1.0"?>
             <configuration>
             <property>
@@ -428,6 +433,11 @@ Resources:
             # The following command logs all stdout and stderr to a log file
             exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+            DREMIO_HOME=/opt/dremio
+            DREMIO_CONFIG_FILE=/etc/dremio/dremio.conf
+            DREMIO_ENV_FILE=/etc/dremio/dremio-env
+            DREMIO_CORE_SITE_FILE=/etc/dremio/core-site.xml
+
             statusFile=/tmp/statusfile
 
             if [ ! -d /opt/dremio ]; then
@@ -480,6 +490,7 @@ Resources:
 
             DREMIO_CONFIG_FILE=/etc/dremio/dremio.conf
             DREMIO_ENV_FILE=/etc/dremio/dremio-env
+            DREMIO_CORE_SITE_FILE=/etc/dremio/core-site.xml
 
             sed -i -e "s/coordinator.master.enabled: true/coordinator.master.enabled: false/" \
                 -e "s/coordinator.enabled: true/coordinator.enabled: false/" \
@@ -493,10 +504,10 @@ Resources:
                 $DREMIO_ENV_FILE
 
             # Set dist configuration in dremio.conf
-            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_ENV_FILE
+            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_CONFIG_FILE
 
             # Setup core-site.xml file to configure S3 storage for Dremio
-            cat <<EOF >> $DREMIO_CORE_SITE_FILE
+            cat <<EOF > $DREMIO_CORE_SITE_FILE
             <?xml version="1.0"?>
             <configuration>
             <property>
