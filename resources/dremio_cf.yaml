@@ -169,8 +169,8 @@ Resources:
               - s3:PutObject
               - s3:DeleteObject
             Resource: 
-              - "arn:aws:s3:::greg-palmer-dremio"
-              - "arn:aws:s3:::greg-palmer-dremio/*"
+              - "arn:aws:s3:::BUCKET_NAME"
+              - "arn:aws:s3:::BUCKET_NAME/*"
   DremioIAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
