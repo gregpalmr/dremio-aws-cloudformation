@@ -356,11 +356,6 @@ Resources:
               fi
             fi
 
-            DREMIO_HOME=/opt/dremio
-            DREMIO_CONFIG_FILE=/etc/dremio/dremio.conf
-            DREMIO_ENV_FILE=/etc/dremio/dremio-env
-            DREMIO_CORE_SITE_FILE=/etc/dremio/core-site.xml
-
             sed -i -e "s/executor.enabled: true/executor.enabled: false/" \
                 $DREMIO_CONFIG_FILE
             sed -i -e "s/#DREMIO_MAX_MEMORY_SIZE_MB=/DREMIO_MAX_MEMORY_SIZE_MB=${MEMORY_SIZE}/" \
@@ -487,10 +482,6 @@ Resources:
             echo "UUID=$UUID $CLOUDCACHE_DIR xfs defaults,nofail  0  2" >> /etc/fstab  && \
             mount -a
             chown dremio:dremio $CLOUDCACHE_DIR
-
-            DREMIO_CONFIG_FILE=/etc/dremio/dremio.conf
-            DREMIO_ENV_FILE=/etc/dremio/dremio-env
-            DREMIO_CORE_SITE_FILE=/etc/dremio/core-site.xml
 
             sed -i -e "s/coordinator.master.enabled: true/coordinator.master.enabled: false/" \
                 -e "s/coordinator.enabled: true/coordinator.enabled: false/" \
