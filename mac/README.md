@@ -35,11 +35,11 @@ Create the AWS key pair, VPC and Subnet objects needed by the Dremio Cloudformat
 
   An AWS Key pair is used to setup a secure SSH session to your AWS EC2 instances. Create a new key pair using the following commands:
   
-    $ aws ec2 create-key-pair --key-name Dremio_Keypair --query 'KeyMaterial' --output text > Dremio_Keypair.pem
+    $ aws ec2 create-key-pair --key-name Dremio-Keypair --query 'KeyMaterial' --output text > dremio_keypair.pem
 
   The public key is stored in AWS, but the private key is not stored in AWS. It is stored locally on your laptop. To view the gernetated private key, use the command:
   
-    $ cat .\Dremio_Keypair.pem
+    $ cat .\dremio_deypair.pem
 
     -----BEGIN RSA PRIVATE KEY-----
     MIIEpQIBAAKCAQEAzfSctGzsVzu8DHlWqjPybtJE4SO3ehop2AMqcEXj2Mb2PzWD84M/qH/uxZBM
@@ -53,9 +53,9 @@ Create the AWS key pair, VPC and Subnet objects needed by the Dremio Cloudformat
 
   Save this file in a safe place because it is not stored anyplace else. It will be used for your PuttyTelnet or other SSH client if you wish to SSH into any of your Dremio EC2 instances. You can display information about the new key pair using the command:
   
-     $ aws ec2 describe-key-pairs --key-name Dremio_Keypair
+     $ aws ec2 describe-key-pairs --key-name Dremio-Keypair
 	 
-     KEYPAIRS        28:14:35:ba:7c:b7:0e:3f:4c:62:c9:45:6a:6e:54:eb:0a:19:d2:5c     Dremio_Keypair       key-073ec4d75b1b670d1
+     KEYPAIRS        28:14:35:ba:7c:b7:0e:3f:4c:62:c9:45:6a:6e:54:eb:0a:19:d2:5c     Dremio-Keypair       key-073ec4d75b1b670d1
 
 ### 2.b Create an AWS VPC and Subnets
 
@@ -148,17 +148,20 @@ OR
 
 The Dremio Cloudformation template requires a parameter to tell it where to download the Dremio installer program from. If you would like to use the Enterprise version of Dremio, contact your local Dremio sales representative to get a copy of the file and upload it to your S3 bucket. If you would like to install the Community Edition of Dremio, use the parameter:
 
-     "ParameterKey=dremioDownloadURL, ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm"
+     ParameterKey=dremioDownloadURL,ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm
 
      $ aws cloudformation create-stack --stack-name My-Dremio-Cluster \
+         --disable-rollback \
+         --capabilities CAPABILITY_IAM \
          --template-body file://dremio_cf.yaml \
-         --tags "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales" \
+         --tags "Key=Name,Value=Gregs-Dremio-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales" \
          --parameters \
            ParameterKey=useVPC,ParameterValue=vpc-2f09d348 \
            ParameterKey=useSubnet,ParameterValue=subnet-b46032ec \
-           ParameterKey=dremioDownloadURL,ParameterValue=https://download.dremio.com/<path to dremio rpm file> \
-           ParameterKey=keyName,ParameterValue=Dremio_Keypair \
-           ParameterKey=clusterSize,ParameterValue=Small--5-executors
+           ParameterKey=keyName,ParameterValue=Dremio-Keypair \
+           ParameterKey=clusterSize,ParameterValue=Small--5-executors \
+           ParameterKey=dremioS3BucketName,ParameterValue=<s3 bucket name> \
+           ParameterKey=dremioDownloadURL,ParameterValue=s3://<s3 bucket name>/<path to dremio rpm file> 
      
      arn:aws:cloudformation:us-west-2:384816939103:stack/My-Dremio-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
 
