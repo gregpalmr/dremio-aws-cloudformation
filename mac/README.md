@@ -158,10 +158,11 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
          --disable-rollback \
          --capabilities CAPABILITY_IAM \
          --template-body file://dremio_cf.yaml \
-         --tags "Key=Name,Value=Gregs-Dremio-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales" \
+         --tags "Key=Name,Value=My-Dremio-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales" \
          --parameters \
            ParameterKey=useVPC,ParameterValue=vpc-2f09d348 \
            ParameterKey=useSubnet,ParameterValue=subnet-b46032ec \
+           ParameterKey=securityGroupInboundSourceCidr,ParameterValue=73.224.23.46/32 \
            ParameterKey=keyName,ParameterValue=Dremio-Keypair \
            ParameterKey=clusterSize,ParameterValue=Small--5-executors \
            ParameterKey=dremioS3BucketName,ParameterValue=<s3 bucket name> \

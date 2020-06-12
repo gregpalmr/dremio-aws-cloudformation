@@ -172,8 +172,6 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
      PS C:\> notepad dremio_cf.yaml
 
-     < Change the Lines that contain BUCKET_NAME to reference your S3 bucket >
-
 ## Step 5. Launch a Dremio cluster using an AWS Cloudformation template
 
 ### 5.a Validate the Cloudformation template 
@@ -192,10 +190,11 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
          --disable-rollback \
          --capabilities CAPABILITY_IAM \
          --template-body file://dremio_cf.yaml
-         --tags "Key=Name,Value=Gregs-Dremio-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales"
+         --tags "Key=Name,Value=My-Dremio-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales"
          --parameters
            ParameterKey=useVPC,ParameterValue=vpc-2f09d348 
            ParameterKey=useSubnet,ParameterValue=subnet-b46032ec
+           ParameterKey=securityGroupInboundSourceCidr,ParameterValue=73.224.23.46/32
            ParameterKey=keyName,ParameterValue=Dremio-Keypair
            ParameterKey=clusterSize,ParameterValue=Small--5-executors
            ParameterKey=dremioS3BucketName,ParameterValue=<s3 bucket name>
