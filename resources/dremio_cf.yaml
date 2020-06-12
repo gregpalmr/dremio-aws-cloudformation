@@ -409,6 +409,10 @@ Resources:
                 <name>fs.s3a.server-side-encryption-algorithm</name>
                 <value>AES256</value>
               </property>
+              <property>
+                <name>fs.s3a.endpoint</name>
+                <value>s3-${AWS::Region}.amazonaws.com</value>
+              </property>
 
             EOF
             fi 
@@ -560,6 +564,10 @@ Resources:
               <property>
                 <name>fs.s3a.server-side-encryption-algorithm</name>
                 <value>AES256</value>
+              </property>
+              <property>
+                <name>fs.s3a.endpoint</name>
+                <value>s3-${AWS::Region}.amazonaws.com</value>
               </property>
 
             EOF
