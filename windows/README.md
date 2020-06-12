@@ -197,7 +197,7 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
            ParameterKey=useVPC,ParameterValue=vpc-2f09d348 
            ParameterKey=useSubnet,ParameterValue=subnet-b46032ec
            ParameterKey=keyName,ParameterValue=Dremio-Keypair
-           ParameterKey=clusterSize,ParameterValue=Small--5-executos
+           ParameterKey=clusterSize,ParameterValue=Small--5-executors
            ParameterKey=dremioS3BucketName,ParameterValue=<s3 bucket name>
            ParameterKey=dremioDownloadURL,ParameterValue=s3://<s3 bucket name>/<path to dremio rpm file>
      
