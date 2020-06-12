@@ -17,19 +17,6 @@ Click on the "mac" link above and follow the instructions
 
 The following sections illustrate some advanced configuration.
 
-### Enable AD/LDAP Integration Logging
-See: https://docs.dremio.com/deployment/amazon-eks/eks-custom.html?h=logback
-
-```
-vi /etc/dremio/logback.xml
-
-<logger name=“com.dremio.extusr.ExternalUserGroupService”>
-  <level value=“debug”/>
-</logger>
-<logger name=“com.dremio.extusr.ldap.LdapUserProvider”>
-  <level value=“debug”/>
-</logger>
-```
 
 ### Enable AD/LDAP in dremio.conf
 See: https://docs.dremio.com/security/authentication.html
@@ -76,6 +63,19 @@ vi /etc/dremio/ad.json
 }
 ```
 
+### Enable Loggin of AD/LDAP Integration 
+See: https://docs.dremio.com/deployment/amazon-eks/eks-custom.html?h=logback
+
+```
+vi /etc/dremio/logback.xml
+
+<logger name=“com.dremio.extusr.ExternalUserGroupService”>
+  <level value=“debug”/>
+</logger>
+<logger name=“com.dremio.extusr.ldap.LdapUserProvider”>
+  <level value=“debug”/>
+</logger>
+```
 
 ### Enable Dremio Web UI Encrypted SSL Connections
 See: https://docs.dremio.com/deployment/wire-encryption-config.html?h=coordinator.web.ssl.keyStore#full-wire-encryption-enterprise-edition-only
