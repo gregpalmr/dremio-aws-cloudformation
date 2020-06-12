@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Setup a Dremio cluster.'
+Description: 'Dremio Data Lake Engine Deployment.'
 Parameters:
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
@@ -23,6 +23,9 @@ Parameters:
   useSubnet:
     Type: AWS::EC2::Subnet::Id
     Description: "Subnet to deploy the cluster into. Must be in the selected VPC."
+  securityGroupInboundSourceCidr:
+    Type: String
+    Description: "The CIDR that represents that ip address range that can commicate with the Dremio daemons via TCP ports. Default is 0.0.0.0/0"
   dremioDownloadURL:
     Type: String
     Description: "S3, HTTP or HTTPS URL to a Dremio RPM. Leave empty to install the latest Dremio CE release."
@@ -59,6 +62,8 @@ Metadata:
         default: "Cluster size"
       useSubnet:
         default: "Deploy to Subnet"
+      securityGroupInboundSourceCidr:
+        default: "0.0.0.0/0"
       useVPC:
         default: "Deploy to VPC"
       dremioDownloadURL:
@@ -169,8 +174,9 @@ Resources:
               - s3:PutObject
               - s3:DeleteObject
             Resource: 
-              - "arn:aws:s3:::BUCKET_NAME"
-              - "arn:aws:s3:::BUCKET_NAME/*"
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref dremioS3BucketName       ] ]
+              - !Join [ "", [ 'arn:aws:s3:::', !Ref dremioS3BucketName, '/*' ] ]
+
   DremioIAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -264,19 +270,23 @@ Resources:
       - IpProtocol: tcp
         FromPort: '9047'
         ToPort: '9047'
-        CidrIp: 0.0.0.0/0
+        CidrIp: !Ref securityGroupInboundSourceCidr
       - IpProtocol: tcp
         FromPort: '31010'
         ToPort: '31010'
-        CidrIp: 0.0.0.0/0
+        CidrIp: !Ref securityGroupInboundSourceCidr
       - IpProtocol: tcp
         FromPort: '22'
         ToPort: '22'
-        CidrIp: 0.0.0.0/0
+        CidrIp: !Ref securityGroupInboundSourceCidr
       - IpProtocol: tcp
         FromPort: '80'
         ToPort: '80'
-        CidrIp: 0.0.0.0/0
+        CidrIp: !Ref securityGroupInboundSourceCidr
+      - IpProtocol: tcp
+        FromPort: '443'
+        ToPort: '443'
+        CidrIp: !Ref securityGroupInboundSourceCidr
   AvailabilityWaitHandle:
     Type: AWS::CloudFormation::WaitConditionHandle
   AvailabilityWaitCondition:
@@ -340,12 +350,14 @@ Resources:
 
               # Install Dremio RPM
               if [[ $url == *s3:* ]] || [[ $url == *S3:* ]]; then
-                aws s3 cp $url .
+                aws s3 --region ${AWS::Region} cp $url .
                 yum -y install $(basename $url)
               elif [[ $url == *http* ]] || [[ $url == *HTTP* ]]; then
                 yum -y install $url
               else
-                echo " ERROR - Dremio Install RPM not specified as either an s3:// or http:// URI. Specified as: $url "
+                errmsg=" ERROR - Parameter \"dremioDownloadURL\" not specified as either an s3:// or http:// URI. Specified as: $url "
+                echo " $errmsg"
+                echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"$errmsg\" }" > $statusFile
                 exit 1
               fi
 
@@ -380,8 +392,28 @@ Resources:
                <description>The credential provider type.</description>
                <value>com.amazonaws.auth.InstanceProfileCredentialsProvider</value>
             </property>
-            </configuration>
+
             EOF
+
+            # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
+            result=$(aws s3api get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
+            if [ "$?" == 0 ] && [[ "$result" == *ApplyServerSideEncryptionByDefault* ]]; then
+
+              cat <<EOF >> $DREMIO_CORE_SITE_FILE
+
+              <property>
+               <name>fs.s3a.connection.ssl.enabled</name>
+               <value>true</value>
+              </property>
+              <property>
+                <name>fs.s3a.server-side-encryption-algorithm</name>
+                <value>AES256</value>
+              </property>
+
+            EOF
+            fi 
+
+            echo "</configuration>" >> $DREMIO_CORE_SITE_FILE
 
             cp $DREMIO_HOME/share/dremio/dremio.service /etc/systemd/system
             systemctl daemon-reload
@@ -445,12 +477,14 @@ Resources:
 
               # Install Dremio RPM
               if [[ $url == *s3:* ]] || [[ $url == *S3:* ]]; then
-                aws s3 cp $url .
+                aws s3 --region ${AWS::Region} cp $url .
                 yum -y install $(basename $url)
               elif [[ $url == *http* ]] || [[ $url == *HTTP:* ]]; then
                 yum -y install $url
               else
-                echo " ERROR - Dremio Install RPM not specified as either an s3:// or http:// URI. Specified as: $url "
+                errmsg=" ERROR - Parameter \"dremioDownloadURL\" not specified as either an s3:// or http:// URI. Specified as: $url "
+                echo " $errmsg"
+                echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"$errmsg\" }" > $statusFile
                 exit 1
               fi
 
@@ -511,8 +545,27 @@ Resources:
                <description>The credential provider type.</description>
                <value>com.amazonaws.auth.InstanceProfileCredentialsProvider</value>
             </property>
-            </configuration>
             EOF
+
+            # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
+            result=$(aws s3api get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
+            if [ "$?" == 0 ] && [[ "$result" == *ApplyServerSideEncryptionByDefault* ]]; then
+
+              cat <<EOF >> $DREMIO_CORE_SITE_FILE
+
+              <property>
+               <name>fs.s3a.connection.ssl.enabled</name>
+               <value>true</value>
+              </property>
+              <property>
+                <name>fs.s3a.server-side-encryption-algorithm</name>
+                <value>AES256</value>
+              </property>
+
+            EOF
+            fi 
+
+            echo "</configuration>" >> $DREMIO_CORE_SITE_FILE
 
             cat <<EOF >> $DREMIO_CONFIG_FILE
             zookeeper: "${ZK}:2181"
