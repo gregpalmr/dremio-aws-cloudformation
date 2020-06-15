@@ -124,17 +124,17 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
 ### Use git or curl to download the Dremio Cloudformation template file
 
-     $ git clone https://github.com/dremio/dremio-cloud-tools
+     $ git clone https://github.com/gregpalmr/dremio-aws-cloudformation
 
-     $ cp dremio-cloud-tools/resources/dremio_cf.yaml .
+     $ cp dremio-aws-cloudformation/resources/dremio_cf.yaml .
 
 OR
 
-     $ curl -O https://raw.githubusercontent.com/dremio/dremio-cloud-tools/master/aws/cloudformation/dremio_cf.yaml
+     $ curl -O https://raw.githubusercontent.com/gregpalmr/dremio-aws-cloudformation/master/resources/dremio_cf.yaml
 
 NOTE: If you are deploying to the AWS GovCloud, then copy the dremio_govcloud_cf.yaml file like this:
 
-     $ cp dremio-aws-cloudformation/resources/dremio_govcloud.yaml .
+     $ cp dremio-aws-cloudformation/resources/dremio_govcloud_cf.yaml .
 
 ## Step 4. Modify the Cloudformation template
 
