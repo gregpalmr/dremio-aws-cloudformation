@@ -396,7 +396,7 @@ Resources:
             EOF
 
             # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
-            result=$(aws s3api get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
+            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
             if [ "$?" == 0 ] && [[ "$result" == *ApplyServerSideEncryptionByDefault* ]]; then
 
               cat <<EOF >> $DREMIO_CORE_SITE_FILE
@@ -552,7 +552,7 @@ Resources:
             EOF
 
             # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
-            result=$(aws s3api get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
+            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
             if [ "$?" == 0 ] && [[ "$result" == *ApplyServerSideEncryptionByDefault* ]]; then
 
               cat <<EOF >> $DREMIO_CORE_SITE_FILE
