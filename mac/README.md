@@ -126,11 +126,15 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
      $ git clone https://github.com/dremio/dremio-cloud-tools
 
-     $ cp dremio-cloud-tools/blob/master/aws/cloudformation/dremio_cf.yaml .
+     $ cp dremio-cloud-tools/resources/dremio_cf.yaml .
 
 OR
 
      $ curl -O https://raw.githubusercontent.com/dremio/dremio-cloud-tools/master/aws/cloudformation/dremio_cf.yaml
+
+NOTE: If you are deploying to the AWS GovCloud, then copy the dremio_govcloud_cf.yaml file like this:
+
+     $ cp dremio-aws-cloudformation/resources/dremio_govcloud.yaml .
 
 ## Step 4. Modify the Cloudformation template
 
@@ -138,7 +142,9 @@ OR
 
      $ vi dremio_cf.yaml
 
-     < Change the Lines that contain BUCKET_NAME to reference your S3 bucket >
+OR
+
+     $ vi dremio_govcloud_cf.yaml
 
 ## Step 5. Launch a Dremio cluster using an AWS Cloudformation template
 
