@@ -160,17 +160,25 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
 ## Step 3. Download the Dremio Cloudformation template
 
-### Use git or curl to download the Dremio Cloudformation template file
+### Use git to download the Dremio Cloudformation template file
 
      PS C:\> git clone https://github.com/gregpalmr/dremio-aws-cloudformation
 
      PS C:\> copy https://raw.githubusercontent.com/gregpalmr/dremio-aws-cloudformation/master/resources/dremio_cf.yaml .
+
+NOTE: If you are deploying to the AWS GovCloud, then copy the dremio_govcloud_cf.yaml file like this:
+
+     PS C:\> copy https://raw.githubusercontent.com/gregpalmr/dremio-aws-cloudformation/master/resources/dremio_dremio_cf.yaml .
 
 ## Step 4. Modify the Cloudformation template
 
 ### (Optional) Modify the Cloudformation template to include your AWS region specific resources
 
      PS C:\> notepad dremio_cf.yaml
+
+     OR:
+
+     PS C:\> notepad dremio_govcloud_cf.yaml
 
 ## Step 5. Launch a Dremio cluster using an AWS Cloudformation template
 
