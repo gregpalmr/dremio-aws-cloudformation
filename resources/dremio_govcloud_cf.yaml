@@ -291,14 +291,6 @@ Resources:
         FromPort: '443'
         ToPort: '443'
         CidrIp: !Ref securityGroupInboundSourceCidr
-  AvailabilityWaitHandle:
-    Type: AWS::CloudFormation::WaitConditionHandle
-  AvailabilityWaitCondition:
-    Type: AWS::CloudFormation::WaitCondition
-    DependsOn: DremioMaster
-    Properties:
-      Handle: !Ref "AvailabilityWaitHandle"
-      Timeout: "600"
 
   DremioSecurityGroupSelfIngress:
     Type: AWS::EC2::SecurityGroupIngress
@@ -367,7 +359,6 @@ Resources:
 
               if [ $? != 0 ]; then
                 echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"Unable to download Dremio\" }" > $statusFile
-                curl -T $statusFile '${AvailabilityWaitHandle}'
                 exit 1
               fi
             fi
@@ -441,7 +432,6 @@ Resources:
               sleep 2
             done
             echo "{ \"Status\" : \"SUCCESS\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Ready\", \"Reason\" : \"Website Available\" }" > $statusFile
-            curl -T $statusFile '${AvailabilityWaitHandle}'
           - DOWNLOAD_URL: !FindInMap [ Custom, Variables, "URL"]
             MEMORY_SIZE: !FindInMap [ClusterSizes, !Ref clusterSize, coordinatorMaxMemory]
             DREMIO_S3_BUCKETNAME: !Ref dremioS3BucketName
@@ -506,7 +496,6 @@ Resources:
 
               if [ $? != 0 ]; then
                 echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"Unable to download Dremio\" }" > $statusFile
-                curl -T $statusFile '${AvailabilityWaitHandle}'
                 exit 1
               fi
             fi
