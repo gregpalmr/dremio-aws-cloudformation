@@ -426,7 +426,7 @@ Resources:
             # Add this server's ip address and hostname to /etc/host file
             LOCAL_IP_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
             LOCAL_HOSTNAME=$(curl http://169.254.169.254/latest/meta-data/local-hostname)
-            if ! grep -q "$LOCAL_IP_ADDRESS"; then
+            if ! grep -q "$LOCAL_IP_ADDRESS" /etc/hosts; then
               echo $LOCAL_IP_ADDRESS     $LOCAL_HOSTNAME >> /etc/hosts
             fi
 
@@ -590,7 +590,7 @@ Resources:
             # Add this server's ip address and hostname to /etc/host file
             LOCAL_IP_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
             LOCAL_HOSTNAME=$(curl http://169.254.169.254/latest/meta-data/local-hostname)
-            if ! grep -q "$LOCAL_IP_ADDRESS"; then
+            if ! grep -q "$LOCAL_IP_ADDRESS" /etc/hosts; then
               echo $LOCAL_IP_ADDRESS     $LOCAL_HOSTNAME >> /etc/hosts
             fi
 
