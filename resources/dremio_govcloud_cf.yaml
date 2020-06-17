@@ -11,6 +11,7 @@ Parameters:
     Type: String
     Description: "The type and number of machines are chosen based on the size selected."
     AllowedValues:
+      - "Single-Node--0-executors"
       - "X-Small--1-executor"
       - "Small--5-executors"
       - "Medium--10-executors"
@@ -73,6 +74,14 @@ Mappings:
     Variables:
       URL: https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm
   ClusterSizes:
+    Single-Node--0-executors:
+      coordinatorInstanceType: r5d.4xlarge
+      coordinatorDiskSize: 10
+      coordinatorMaxMemory: 122880
+      executorInstanceType: r5d.4xlarge
+      executorCount: 0
+      executorDiskSize: 10
+      executorMaxMemory: 122880
     X-Small--1-executor:
       coordinatorInstanceType: m5.2xlarge
       coordinatorDiskSize: 10
@@ -369,8 +378,13 @@ Resources:
               fi
             fi
 
-            sed -i -e "s/executor.enabled: true/executor.enabled: false/" \
-                $DREMIO_CONFIG_FILE
+            # If this is a single node cluster, make the coordinator node also an executor node
+            if [ ${EXECUTOR_COUNT} == 0 ]; then
+              sed -i -e "s/executor.enabled: false/executor.enabled: true/" $DREMIO_CONFIG_FILE
+            else
+              sed -i -e "s/executor.enabled: true/executor.enabled: false/" $DREMIO_CONFIG_FILE
+            fi
+
             sed -i -e "s/#DREMIO_MAX_MEMORY_SIZE_MB=/DREMIO_MAX_MEMORY_SIZE_MB=${MEMORY_SIZE}/" \
                 $DREMIO_ENV_FILE
             echo 'DREMIO_JAVA_SERVER_EXTRA_OPTS="-XX:+UseG1GC -XX:G1HeapRegionSize=32M -XX:MaxGCPauseMillis=500 -XX:InitiatingHeapOccupancyPercent=25"' >>  \
@@ -449,6 +463,7 @@ Resources:
           - DOWNLOAD_URL: !FindInMap [ Custom, Variables, "URL"]
             MEMORY_SIZE: !FindInMap [ClusterSizes, !Ref clusterSize, coordinatorMaxMemory]
             DREMIO_S3_BUCKETNAME: !Ref dremioS3BucketName
+            EXECUTOR_COUNT: !FindInMap [ClusterSizes, !Ref clusterSize, executorCount]
 
   DremioExecutorLC:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -612,7 +627,6 @@ Resources:
               echo $LOCAL_IP_ADDRESS     $LOCAL_HOSTNAME >> /etc/hosts
             fi
 
-            # Start the Dremio server process
             cat <<EOF >> $DREMIO_CONFIG_FILE
             zookeeper: "${ZK}:2181"
             services.executor.cache.path.db: "$CLOUDCACHE_DIR"
@@ -621,6 +635,7 @@ Resources:
             services.executor.cache.pctquota.fs: [100]
             EOF
 
+            # Start the Dremio server process
             cp $DREMIO_HOME/share/dremio/dremio.service /etc/systemd/system
             systemctl daemon-reload
             systemctl start dremio
@@ -629,6 +644,7 @@ Resources:
             DOWNLOAD_URL: !FindInMap [ Custom, Variables, "URL"]
             MEMORY_SIZE: !FindInMap [ClusterSizes, !Ref clusterSize, executorMaxMemory]
             DREMIO_S3_BUCKETNAME: !Ref dremioS3BucketName
+            EXECUTOR_COUNT: !FindInMap [ClusterSizes, !Ref clusterSize, executorCount]
 
   DremioExecutorASG:
     Type: AWS::AutoScaling::AutoScalingGroup
