@@ -162,6 +162,12 @@ Resources:
         Version: '2012-10-17'
         Statement:
           -
+            Sid: AllowDremioToDescribeInstances
+            Effect: Allow
+            Action:
+              - ec2:DescribeInstances
+            Resource: "*"
+          -
             Sid: AllowDremioToGetS3BucketLocations
             Effect: Allow
             Action:
@@ -414,12 +420,20 @@ Resources:
 
             echo "</configuration>" >> $DREMIO_CORE_SITE_FILE
 
-            # Add this server's ip address and hostname to /etc/host file
-            LOCAL_IP_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
-            LOCAL_HOSTNAME=$(curl http://169.254.169.254/latest/meta-data/local-hostname)
-            if ! grep -q "$LOCAL_IP_ADDRESS" /etc/hosts; then
-              echo $LOCAL_IP_ADDRESS     $LOCAL_HOSTNAME >> /etc/hosts
-            fi
+            # Add the hostnames of all the EC2 instances in this Dremio cluster into the /etc/hosts file
+            sleep 30
+
+            instance_ids=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].InstanceId' --filters "Name=tag-key,Values=aws:cloudformation:stack-name" "Name=tag-value,Values=${AWS::StackName}" --output=text | tr '\n' ' ')
+
+            echo "" >> /etc/hosts
+            echo "# Dremio cluster hostnames" >> /etc/hosts
+
+            for next_instance_id in $instance_ids
+            do
+              IP_ADDRESS=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --instance-ids $next_instance_id --output=text)
+              FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --instance-ids $next_instance_id --output=text)
+              echo "$IP_ADDRESS     $FQDN" >> /etc/hosts
+            done
 
             # Start the Dremio server process
             cp $DREMIO_HOME/share/dremio/dremio.service /etc/systemd/system
@@ -575,6 +589,21 @@ Resources:
             fi 
 
             echo "</configuration>" >> $DREMIO_CORE_SITE_FILE
+
+            # Add the hostnames of all the EC2 instances in this Dremio cluster into the /etc/hosts file
+            sleep 30
+
+            instance_ids=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].InstanceId' --filters "Name=tag-key,Values=aws:cloudformation:stack-name" "Name=tag-value,Values=${AWS::StackName}" --output=text | tr '\n' ' ')
+
+            echo "" >> /etc/hosts
+            echo "# Dremio cluster hostnames" >> /etc/hosts
+
+            for next_instance_id in $instance_ids
+            do
+              IP_ADDRESS=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --instance-ids $next_instance_id --output=text)
+              FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --instance-ids $next_instance_id --output=text)
+              echo "$IP_ADDRESS     $FQDN" >> /etc/hosts
+            done
 
             # Add this server's ip address and hostname to /etc/host file
             LOCAL_IP_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
