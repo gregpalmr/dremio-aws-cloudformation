@@ -76,19 +76,19 @@ Mappings:
   ClusterSizes:
     Single-Node--0-executors:
       coordinatorInstanceType: r5d.4xlarge
-      coordinatorDiskSize: 10
+      coordinatorDiskSize: 50
       coordinatorMaxMemory: 122880
       executorInstanceType: r5d.4xlarge
       executorCount: 0
-      executorDiskSize: 10
+      executorDiskSize: 50
       executorMaxMemory: 122880
     X-Small--1-executor:
       coordinatorInstanceType: m5.2xlarge
-      coordinatorDiskSize: 10
+      coordinatorDiskSize: 50
       coordinatorMaxMemory: 28672
       executorInstanceType: r5d.4xlarge
       executorCount: 1
-      executorDiskSize: 10
+      executorDiskSize: 50
       executorMaxMemory: 122880
     Small--5-executors:
       coordinatorInstanceType: m5.2xlarge
@@ -163,6 +163,7 @@ Resources:
   DremioIAMPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
+      ManagedPolicyName: !Join ["-", ["DremioIAMPolicy", !Ref "AWS::StackName"]]
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -176,6 +177,7 @@ Resources:
             Sid: AllowDremioToGetS3BucketLocations
             Effect: Allow
             Action:
+              - s3:GetEncryptionConfiguration
               - s3:GetBucketLocation
               - s3:ListAllMyBuckets
               - s3:HeadBucket
@@ -195,6 +197,7 @@ Resources:
   DremioIAMRole:
     Type: 'AWS::IAM::Role'
     Properties:
+      RoleName: !Join ["-", ["DremioIAMRole", !Ref "AWS::StackName"]]
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -210,6 +213,7 @@ Resources:
   DremioInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
+      InstanceProfileName: !Join ["-", ["InstanceProfileName", !Ref "AWS::StackName"]]
       Path: /
       Roles: 
         - !Ref DremioIAMRole
@@ -285,11 +289,11 @@ Resources:
       - IpProtocol: tcp
         FromPort: '9047'
         ToPort: '9047'
-        CidrIp: !Ref securityGroupInboundSourceCidr
+        CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
         FromPort: '31010'
         ToPort: '31010'
-        CidrIp: !Ref securityGroupInboundSourceCidr
+        CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
         FromPort: '22'
         ToPort: '22'
@@ -297,11 +301,11 @@ Resources:
       - IpProtocol: tcp
         FromPort: '80'
         ToPort: '80'
-        CidrIp: !Ref securityGroupInboundSourceCidr
+        CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
         FromPort: '443'
         ToPort: '443'
-        CidrIp: !Ref securityGroupInboundSourceCidr
+        CidrIp: 0.0.0.0/0
   AvailabilityWaitHandle:
     Type: AWS::CloudFormation::WaitConditionHandle
   AvailabilityWaitCondition:
@@ -396,7 +400,11 @@ Resources:
                 $DREMIO_ENV_FILE
 
             # Set dist configuration in dremio.conf
-            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_CONFIG_FILE
+            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist/\${AWS::StackName}\"" $DREMIO_CONFIG_FILE
+
+            # Set the results: file location in dremio.conf
+            sed -i -e "/dist:/a\  results: \"pdfs:///var/lib/dremio/results\"" $DREMIO_CONFIG_FILE
+            mkdir -p /var/lib/dremio/results && chown -R dremio:dremio /var/lib/dremio/results
 
             # Setup core-site.xml file to configure S3 storage for Dremio
             cat <<EOF > $DREMIO_CORE_SITE_FILE
@@ -416,8 +424,8 @@ Resources:
             EOF
 
             # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
-            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
-            if [ "$?" == 0 ] && [[ "$result" == *ApplyServerSideEncryptionByDefault* ]]; then
+            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME} | grep SSEAlgorithm)
+            if [[ "$result" == *SSEAlgorithm* ]]; then
 
               cat <<EOF >> $DREMIO_CORE_SITE_FILE
 
@@ -449,8 +457,8 @@ Resources:
 
             for next_instance_id in $instance_ids
             do
-              IP_ADDRESS=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --instance-ids $next_instance_id --output=text)
-              FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --instance-ids $next_instance_id --output=text)
+              IP_ADDRESS=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PrivateIpAddress' --instance-ids $next_instance_id --output=text)
+              FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PrivateDnsName' --instance-ids $next_instance_id --output=text)
               echo "$IP_ADDRESS     $FQDN" >> /etc/hosts
             done
  
@@ -570,7 +578,11 @@ Resources:
                 $DREMIO_ENV_FILE
 
             # Set dist configuration in dremio.conf
-            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist\"" $DREMIO_CONFIG_FILE
+            sed -i -e "/dist:/c\  dist: \"dremioS3:///${DREMIO_S3_BUCKETNAME}/dremio/dist/${AWS::StackName}\"" $DREMIO_CONFIG_FILE
+
+            # Set the results: file location in dremio.conf
+            sed -i -e "/dist:/a\  results: \"pdfs:///var/lib/dremio/results\"" $DREMIO_CONFIG_FILE
+            mkdir -p /var/lib/dremio/results && chown -R dremio:dremio /var/lib/dremio/results
 
             # Setup core-site.xml file to configure S3 storage for Dremio
             cat <<EOF > $DREMIO_CORE_SITE_FILE
@@ -589,8 +601,8 @@ Resources:
             EOF
 
             # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
-            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
-            if [ "$?" == 0 ] && [[ "$result" == *ApplyServerSideEncryptionByDefault* ]]; then
+            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME} | grep SSEAlgorithm)
+            if [[ "$result" == *SSEAlgorithm* ]]; then
 
               cat <<EOF >> $DREMIO_CORE_SITE_FILE
 
@@ -622,8 +634,8 @@ Resources:
 
             for next_instance_id in $instance_ids
             do
-              IP_ADDRESS=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --instance-ids $next_instance_id --output=text)
-              FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PublicDnsName' --instance-ids $next_instance_id --output=text)
+              IP_ADDRESS=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PrivateIpAddress' --instance-ids $next_instance_id --output=text)
+              FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PrivateDnsName' --instance-ids $next_instance_id --output=text)
               echo "$IP_ADDRESS     $FQDN" >> /etc/hosts
             done
 
