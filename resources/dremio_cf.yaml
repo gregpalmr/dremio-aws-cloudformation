@@ -349,6 +349,7 @@ Resources:
           - |
             #!/bin/bash -x
 
+            # TODO: Setup AWS Cloudwatch - Ref: https://github.com/rymurr/dremio-cloudwatch-exporter
             # The following command logs all stdout and stderr to a log file
             exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
@@ -424,7 +425,7 @@ Resources:
             EOF
 
             # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
-            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME} | grep SSEAlgorithm)
+            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME})
             if [[ "$result" == *SSEAlgorithm* ]]; then
 
               cat <<EOF >> $DREMIO_CORE_SITE_FILE
@@ -461,7 +462,7 @@ Resources:
               FQDN=$(aws ec2 --region ${AWS::Region} describe-instances --query 'Reservations[*].Instances[*].PrivateDnsName' --instance-ids $next_instance_id --output=text)
               echo "$IP_ADDRESS     $FQDN" >> /etc/hosts
             done
- 
+
             # Start the Dremio server process
             cp $DREMIO_HOME/share/dremio/dremio.service /etc/systemd/system
             systemctl daemon-reload
@@ -601,7 +602,7 @@ Resources:
             EOF
 
             # Check if the target bucket is encyrpted, if so, add the entry in the core-site.xml file
-            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME} | grep SSEAlgorithm)
+            result=$(aws s3api --region ${AWS::Region} get-bucket-encryption --bucket ${DREMIO_S3_BUCKETNAME} )
             if [[ "$result" == *SSEAlgorithm* ]]; then
 
               cat <<EOF >> $DREMIO_CORE_SITE_FILE
