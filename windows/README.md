@@ -166,9 +166,14 @@ See: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnets-commands-examp
 
      PS C:\> copy dremio-aws-cloudformation\resources\dremio_cf.yaml .
 
-NOTE: If you are deploying to the AWS GovCloud, then copy the dremio_govcloud_cf.yaml file like this:
+     Use the Dremio Community Edition version of the Cloudformation template
+     PS C:\> copy dremio-aws-cloudformation\resources\dremio_cf.yaml .
 
-     PS C:\> copy dremio-aws-cloudformation\resources\dremio_govcloud.yaml .
+     Use the Dremio Enterprise Edition version of the Cloudformation template
+     PS C:\> copy dremio-aws-cloudformation\resources\dremio_cf_ee.yaml .
+
+     Use the Dremio Enterpris Edition version of the Cloudformation template on AWS GovCloud
+     PS C:\> copy dremio-aws-cloudformation\resources\dremio_cf_ee_govcloud.yaml .
 
 ## Step 4. Modify the Cloudformation template
 
@@ -194,11 +199,11 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
 To launch the Dremio cluster in the Cloudformation stack, use this command:
 
-     PS C:\> aws cloudformation create-stack --stack-name My-Dremio-Cluster
+     PS C:\> aws cloudformation create-stack --stack-name Dremio-CE-Cluster
          --disable-rollback \
-         --capabilities CAPABILITY_IAM \
+         --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
          --template-body file://dremio_cf.yaml
-         --tags "Key=Name,Value=My-Dremio-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales"
+         --tags "Key=Name,Value=Dremio-CE-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales"
          --parameters
            ParameterKey=useVPC,ParameterValue=vpc-2f09d348 
            ParameterKey=useSubnet,ParameterValue=subnet-b46032ec
@@ -208,13 +213,13 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
            ParameterKey=dremioS3BucketName,ParameterValue=<s3 bucket name>
            ParameterKey=dremioDownloadURL,ParameterValue=s3://<s3 bucket name>/<path to dremio rpm file>
      
-     arn:aws:cloudformation:us-west-2:384816939103:stack/My-Dremio-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
+     arn:aws:cloudformation:us-west-2:384816939103:stack/Dremio-CE-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
 
   Get various progress reports on the stack creation process
 
-     PS C:\> aws cloudformation describe-stacks --stack-name My-Dremio-Cluster
+     PS C:\> aws cloudformation describe-stacks --stack-name Dremio-CE-Cluster
 
-     PS C:\> aws cloudformation describe-stack-events --stack-name My-Dremio-Cluster
+     PS C:\> aws cloudformation describe-stack-events --stack-name Dremio-CE-Cluster
 
      PS C:\> aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE
 
@@ -222,11 +227,11 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
 
   Get the stack output that describes the URL for the Dremio Web UI
 
-     PS C:\> aws cloudformation describe-stacks --stack-name My-Dremio-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
+     PS C:\> aws cloudformation describe-stacks --stack-name Dremio-CE-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
 
 ### Step 6. Delete the Dremio Cloudformation Stack
 
-     PS C:\> aws cloudformation delete-stack --stack-name My-Dremio-Cluster 
+     PS C:\> aws cloudformation delete-stack --stack-name Dremio-CE-Cluster 
 
 ---
 
