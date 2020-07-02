@@ -13,7 +13,7 @@ Click on the "windows" link above and follow the instructions
 
 Click on the "mac" link above and follow the instructions
 
-## 3. Advanced Dremio Configuration
+## 3. Advanced Dremio Configuration (Enterprise Edition Only)
 
 The following sections illustrate some advanced configuration.
 
