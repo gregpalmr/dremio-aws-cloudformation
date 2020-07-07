@@ -229,6 +229,17 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
 
      PS C:\> aws cloudformation describe-stacks --stack-name Dremio-CE-Cluster --query "Stacks[0].Outputs[?OutputKey=='DremioUI'].OutputValue" --output text
 
+Note: If you deployed using the Dremio Enterprise Edition Cloudformation template (dremio_cf_ee.yaml) and you try to access the Dremio Web UI using Google's Chrome Web browser, you may see a Chrome error message like this:
+
+     NET::ERR_CERT_INVALID website sent scrambled credentials self-signed certificate
+
+Chrome is showing the ERR_CERT_INVALID error because the Dremio Enterprise Edition Cloud
+formation template generates a self-signed SSL certificate for use with the Dremio Web s
+erver. For a production deployment, you should reference your SSL certificate that was s
+igned by a valid Certificate Authority (CA).
+
+To successfully display the Dremio Web UI in this situation, type the word "thisisunsafe" without the quotations in the browser window. Chrome will then proceed to display the Dremio Web UI.
+
 ### Step 6. Delete the Dremio Cloudformation Stack
 
      PS C:\> aws cloudformation delete-stack --stack-name Dremio-CE-Cluster 
