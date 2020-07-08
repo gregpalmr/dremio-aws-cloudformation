@@ -168,6 +168,12 @@ Resources:
         Version: '2012-10-17'
         Statement:
           -
+            Sid: AllowDremioToSignalResources
+            Effect: Allow
+            Action:
+              - cloudformation:SignalResource
+            Resource: "*"
+          -
             Sid: AllowDremioToDescribeInstances
             Effect: Allow
             Action:
@@ -383,7 +389,8 @@ Resources:
 
               if [ $? != 0 ]; then
                 echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"Unable to download Dremio\" }" > $statusFile
-                curl -T $statusFile '${AvailabilityWaitHandle}'
+                #curl -T $statusFile '${AvailabilityWaitHandle}'
+                aws cloudformation --region ${AWS::Region} signal-resource --stack-name ${AWS::StackName} --logical-resource-id AvailabilityWaitCondition --unique-id ${AWS::StackName} --status FAILURE
                 exit 1
               fi
             fi
@@ -492,7 +499,8 @@ Resources:
               sleep 2
             done
             echo "{ \"Status\" : \"SUCCESS\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Ready\", \"Reason\" : \"Website Available\" }" > $statusFile
-            curl -T $statusFile '${AvailabilityWaitHandle}'
+            #curl -T $statusFile '${AvailabilityWaitHandle}'
+            aws cloudformation --region ${AWS::Region} signal-resource --stack-name ${AWS::StackName} --logical-resource-id AvailabilityWaitCondition --unique-id ${AWS::StackName} --status SUCCESS
           - DOWNLOAD_URL: !FindInMap [ Custom, Variables, "URL"]
             MEMORY_SIZE: !FindInMap [ClusterSizes, !Ref clusterSize, coordinatorMaxMemory]
             DREMIO_S3_BUCKETNAME: !Ref dremioS3BucketName
@@ -558,7 +566,8 @@ Resources:
 
               if [ $? != 0 ]; then
                 echo "{ \"Status\" : \"FAILURE\", \"UniqueId\" : \"${AWS::StackName}\", \"Data\" : \"Failed\", \"Reason\" : \"Unable to download Dremio\" }" > $statusFile
-                curl -T $statusFile '${AvailabilityWaitHandle}'
+                #curl -T $statusFile '${AvailabilityWaitHandle}'
+                aws cloudformation --region ${AWS::Region} signal-resource --stack-name ${AWS::StackName} --logical-resource-id AvailabilityWaitCondition --unique-id ${AWS::StackName} --status FAILURE
                 exit 1
               fi
             fi
