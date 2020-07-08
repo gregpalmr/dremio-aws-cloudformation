@@ -153,7 +153,7 @@ The Dremio Cloudformation template requires a parameter to tell it where to down
 
      ParameterKey=dremioDownloadURL,ParameterValue=https://download.dremio.com/community-server/dremio-community-LATEST.noarch.rpm
 
-To launch the Dremio cluster in the Cloudformation stack, use this command:
+To launch the Dremio Community Edition cluster in the Cloudformation stack, use this command:
 
      $ aws cloudformation create-stack --stack-name Dremio-CE-Cluster \
          --disable-rollback \
@@ -171,6 +171,23 @@ To launch the Dremio cluster in the Cloudformation stack, use this command:
      
      arn:aws:cloudformation:us-west-2:384816939103:stack/Dremio-CE-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
 
+To launch the Dremio Enterprise Edition cluster in the Cloudformation stack, use this command:
+
+     $ aws cloudformation create-stack --stack-name Dremio-EE-Cluster \
+         --disable-rollback \
+         --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+         --template-body file://dremio_cf_ee.yaml \
+         --tags "Key=Name,Value=Dremio-EE-Cluster" "Key=Owner,Value=Greg-Palmer" "Key=Business-Unit,Value=Sales" \
+         --parameters \
+           ParameterKey=useVPC,ParameterValue=vpc-2f09d348 \
+           ParameterKey=useSubnet,ParameterValue=subnet-b46032ec \
+           ParameterKey=securityGroupInboundSourceCidr,ParameterValue=73.224.23.46/32 \
+           ParameterKey=keyName,ParameterValue=Dremio-Keypair \
+           ParameterKey=clusterSize,ParameterValue=Small--5-executors \
+           ParameterKey=dremioS3BucketName,ParameterValue=<s3 bucket name> \
+           ParameterKey=dremioDownloadURL,ParameterValue=s3://<s3 bucket name>/<path to dremio rpm file> 
+     
+     arn:aws:cloudformation:us-west-2:384816939103:stack/Dremio-CE-Cluster/9dc09010-aa5b-11ea-816f-0aa27834ab52
   Get various progress reports on the stack creation process
 
      $ aws cloudformation describe-stacks --stack-name Dremio-CE-Cluster
